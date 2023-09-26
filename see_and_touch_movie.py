@@ -10,7 +10,7 @@ from utils import create_epoch
 crid = 2243
 surface_dict = {'color': 'purple', 'opacity': 0.5, 'param': None}
 dt = datetime(2021, 4, 27)
-dt_epoch = create_epoch([datetime(2021, 4, 27), datetime(2021, 4, 30)], timedelta(days=0.5))
+dt_epoch = create_epoch([datetime(2021, 4, 27), datetime(2021, 4, 30)], timedelta(hours=4))
 tracks = []
 tracks.append({'r0': 11.3643, 'carrlon0': 63.305, 'carrlat0': -1.1469, 'v0': 296.49})
 tracks.append({'r0': 8.8387, 'carrlon0': 104.845, 'carrlat0': -4.8701, 'v0': 241.51})
