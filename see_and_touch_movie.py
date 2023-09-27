@@ -39,6 +39,8 @@ tracks.append({'r0': 9.1360, 'carrlon0': 78.567, 'carrlat0': -2.005, 'v0': 282.7
 # plot.update_layout(template='plotly_dark')
 # plotly.offline.plot(plot)
 
+
+
 plot = go.Figure(data=[plot_Spacecraft_model('SPP', dt_epoch[0], scale=5)]
                       + plot_FOV('SPP', 'SPP_WISPR_INNER', dt_epoch[0],
                                  fov_dist_Rs=25, plot_type='wire+surf', color='lime')
@@ -57,5 +59,8 @@ plot = go.Figure(data=[plot_Spacecraft_model('SPP', dt_epoch[0], scale=5)]
                                              aspectratio=dict(x=1, y=1, z=1)),
                                   template='plotly_dark',
                                   updatemenus=[dict(type='buttons',
-                                                    buttons=[dict(label='Play', method='animate', args=[None])])]))
+                                                    buttons=[dict(label='Play', method='animate', args=[None])])])).set_subplots(1,2)
+from PIL import Image
+img = Image.open('/Users/ephe/Desktop/IMG_8756.JPG')
+plot.add_trace(go.Image(z=img),1,2)
 plotly.offline.plot(plot)
