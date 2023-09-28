@@ -61,6 +61,6 @@ plot = go.Figure(data=[plot_Spacecraft_model('SPP', dt_epoch[0], scale=5)]
                                   updatemenus=[dict(type='buttons',
                                                     buttons=[dict(label='Play', method='animate', args=[None])])])).set_subplots(1,2)
 from PIL import Image
-img = Image.open('/Users/ephe/Desktop/IMG_8756.JPG')
-plot.add_trace(go.Image(z=img),1,2)
+# img = Image.open('/Users/ephe/Desktop/IMG_8756.JPG')
+# plot.add_trace(go.Image(z=img),1,2)
 plotly.offline.plot(plot)
