@@ -170,7 +170,7 @@ def plot_object_orbit(obj_name, dt_epoch, type='line',**kwargs):
     if type == 'line':
         trace = go.Scatter3d(x=pos['x'], y=pos['y'], z=pos['z'],
                              mode='lines',
-                             line=dict(width=10,**kwargs))
+                             line=dict(**kwargs))
     elif type == 'marker':
         trace = go.Scatter3d(x=pos['x'], y=pos['y'], z=pos['z'],
                              mode='markers',
