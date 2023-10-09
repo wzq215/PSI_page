@@ -96,6 +96,12 @@ if __name__ == '__main__':
         Sun_scale = st.number_input('Size (Rs)', 1, 10, 1)
     HCS_options = st.sidebar.multiselect('Heliospheric Current Sheet (HCS)',
                                          ('SC', 'IH', 'HPS'), 'SC')
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        slice_options = st.sidebar.multiselect('Slices', ('Latitudinal', 'Longitudinal', 'Radial'), 'Latitudinal')
+    with col2:
+        slice_region = st.sidebar.multiselect('Region', ('SC', 'IH'), 'SC')
+
     PLANETS_options = st.sidebar.multiselect('Planets',
                                              ('EARTH', 'VENUS', 'MERCURY'))
     Spacecrafts_options = st.sidebar.multiselect('Spacecrafts',
@@ -123,7 +129,7 @@ if __name__ == '__main__':
         st.sidebar.divider()
         HCS_dict['plot_sc'] = ('SC' in HCS_options)
         HCS_dict['plot_ih'] = ('IH' in HCS_options)
-    
+
         st.sidebar.header('HCS Settings')
         HCS_dict['crid'] = Ini_crid
         HCS_surface_style = st.sidebar.radio('Surface palettes',
@@ -131,7 +137,7 @@ if __name__ == '__main__':
         HCS_default_clim = {'Solar Wind Speed': [200, 400], 'Solar Wind Proton Density': [1e2, 1e5]}
         if HCS_surface_style == 'Mono':
             HCS_surface_color = st.sidebar.selectbox('Color', (
-            'purple', 'white', 'blue', 'yellow'))  # [FUTURE] CHANGE WITH COMMON PLOTLY COLORS OR COLOR PICKER
+                'purple', 'white', 'blue', 'yellow'))  # [FUTURE] CHANGE WITH COMMON PLOTLY COLORS OR COLOR PICKER
             HCS_surface_dict['color'] = HCS_surface_color
             HCS_surface_dict['param'] = None
         else:
@@ -140,7 +146,9 @@ if __name__ == '__main__':
             elif HCS_surface_style == 'Solar Wind Proton Density':
                 HCS_surface_dict['param'] = 'rho'
             HCS_surface_cmap = st.sidebar.selectbox('Color Map', ('jet',
-                                                                  'plasma'))  # [FUTURE] CHANGE WITH COMMON PLOTLY COLOR SCALES # [FUTURE] ON CHANGE, JUST CHANGE THE COLOR INSTEAD OF RERUN THE WHOLE CODE
+                                                                  'plasma'))
+            # TODO: CHANGE WITH COMMON PLOTLY COLOR SCALES
+            # TODO: ON CHANGE, JUST CHANGE THE COLOR INSTEAD OF RERUN THE WHOLE CODE
             HCS_surface_dict['cmap'] = HCS_surface_cmap
             HCS_col1, HCS_col2 = st.sidebar.columns(2)
             HCS_surface_islog = False
@@ -148,18 +156,17 @@ if __name__ == '__main__':
                 HCS_surface_showscale = st.checkbox('Show Colorbar')
                 HCS_surface_islog = st.checkbox('Log10')
             with HCS_col2:
-                HCS_surface_rpower = st.number_input('*r^n',0,4,0,step=1)
-            
+                HCS_surface_rpower = st.number_input('*r^n', 0, 4, 0, step=1)
+
             HCS_default_clim[HCS_surface_style] = HCS_default_clim[HCS_surface_style] * 100 ** HCS_surface_rpower
             if HCS_surface_islog:
-                    HCS_default_clim[HCS_surface_style] = np.log10(HCS_default_clim[HCS_surface_style])
+                HCS_default_clim[HCS_surface_style] = np.log10(HCS_default_clim[HCS_surface_style])
 
             HCS_col3, HCS_col4 = st.sidebar.columns(2)
             with HCS_col3:
-                HCS_surface_cmin = st.number_input('Min',None, None, HCS_default_clim[HCS_surface_style][0])
+                HCS_surface_cmin = st.number_input('Min', None, None, HCS_default_clim[HCS_surface_style][0])
             with HCS_col4:
                 HCS_surface_cmax = st.number_input('Max', None, None, HCS_default_clim[HCS_surface_style][1])
-
 
             HCS_surface_dict['clim'] = [HCS_surface_cmin, HCS_surface_cmax]
             HCS_surface_dict['showscale'] = HCS_surface_showscale
@@ -171,10 +178,58 @@ if __name__ == '__main__':
         if 'HPS' in HCS_options:
             st.sidebar.header('HPS Settings')
             HPS_dict['crid'] = Ini_crid
-            HPS_dict['isos_value'] = st.sidebar.number_input('Isos Value (1e4)',None,None,value=0.9,step=0.1,key='isos_hps')*1e4
-            HPS_dict['opacity'] = st.sidebar.number_input('HPS Opacity',0.0,1.0,value=0.9,step=0.1,key='opacity_hps')
-            HPS_dict['color'] = st.sidebar.selectbox('HPS Color',('azure','white'))
-            
+            HPS_dict['isos_value'] = st.sidebar.number_input('Isos Value (1e4)', None, None, value=0.9, step=0.1,
+                                                             key='isos_hps') * 1e4
+            HPS_dict['opacity'] = st.sidebar.number_input('HPS Opacity', 0.0, 1.0, value=0.9, step=0.1,
+                                                          key='opacity_hps')
+            HPS_dict['color'] = st.sidebar.selectbox('HPS Color', ('azure', 'white'))
+
+    slice_dict = {}
+    if slice_options:
+        st.sidebar.divider()
+        slice_dict['plot_sc'] = ('SC' in slice_region)
+        slice_dict['plot_ih'] = ('IH' in slice_region)
+        st.sidebar.header('Slice Settings')
+        if 'latitudinal' in slice_options:
+            slice_dict['z_const'] = st.sidebar.number_input('Z (Rs)', None, None, value=0., key='z_const')
+
+        slice_param = st.sidebar.radio('Slice Param',
+                                       ('Solar Wind Speed', 'Solar Wind Proton Density'))
+        slice_default_clim = {'Solar Wind Speed': [200, 400], 'Solar Wind Proton Density': [1e2, 1e5]}
+
+        if slice_param == 'Solar Wind Speed':
+            slice_dict['param'] = 'vr'
+        elif slice_param == 'Solar Wind Proton Density':
+            slice_dict['param'] = 'rho'
+        slice_cmap = st.sidebar.selectbox('Color Map', ('jet',
+                                                        'plasma'),
+                                          key='slice_cmap')
+
+        slice_dict['colorscale'] = slice_cmap
+        slice_col1, slice_col2 = st.sidebar.columns(2)
+        slice_islog = False
+        with slice_col1:
+            slice_showscale = st.checkbox('Show Colorbar')
+            slice_islog = st.checkbox('Log10')
+        with slice_col2:
+            slice_rpower = st.number_input('*r^n', 0, 4, 0, step=1)
+
+        slice_default_clim[slice_param] = slice_default_clim[slice_param] * 100 ** slice_rpower
+        if slice_islog:
+            slice_default_clim[slice_param] = np.log10(slice_default_clim[slice_param])
+
+        slice_col3, slice_col4 = st.sidebar.columns(2)
+        with slice_col3:
+            slice_cmin = st.number_input('Min', None, None, slice_default_clim[slice_param][0])
+        with slice_col4:
+            slice_cmax = st.number_input('Max', None, None, slice_default_clim[slice_param][1])
+        slice_dict['clim'] = [slice_cmin, slice_cmax]
+        slice_dict['showscale'] = slice_showscale
+        slice_dict['r_power'] = slice_rpower
+        slice_dict['islog'] = slice_islog
+        slice_dict['crid'] = Ini_crid
+        slice_dict['opacity'] = st.sidebar.number_input('Opacity', 0.0, 1.0, value=0.9, step=0.1, key='opacity_slc')
+
     Planet_dict = {}
     if PLANETS_options != []:
         st.sidebar.divider()
@@ -185,7 +240,7 @@ if __name__ == '__main__':
             planet_orbit_epoch = ask_for_epoch('planet_orbit', Ini_beg_dt, Ini_end_dt)
             Planet_dict['Planet_epoch'] = planet_orbit_epoch
         else:
-            Planet_dict['Planet_epoch']=[]
+            Planet_dict['Planet_epoch'] = []
         if st.sidebar.checkbox('Trace Back'):
             planet_trace_epoch = ask_for_epoch('planet_trace', Ini_beg_dt, Ini_end_dt)
             Planet_dict['Planet_trace_epoch'] = planet_trace_epoch
@@ -196,7 +251,6 @@ if __name__ == '__main__':
             Planet_dict['Planet_model_dt'] = Planet_model_dt
         else:
             Planet_dict['Planet_model_dt'] = None
-
 
     Spacecraft_dict = {}
     if Spacecrafts_options != []:
@@ -220,50 +274,48 @@ if __name__ == '__main__':
     st.sidebar.divider()
     st.sidebar.header('Layout Setting')
     layout_dict['theme'] = 'plotly'
-    layout_dict['theme'] = st.sidebar.selectbox('Theme', ('plotly','plotly_white','plotly_dark','presentation','ggplot2','seaborn','simple_white','none'))
+    layout_dict['theme'] = st.sidebar.selectbox('Theme', (
+    'plotly', 'plotly_white', 'plotly_dark', 'presentation', 'ggplot2', 'seaborn', 'simple_white', 'none'))
     layout_col1, layout_col2 = st.sidebar.columns(2)
-    
+
     with layout_col1:
-        layout_xrng_min = st.number_input('Xmin',None,None,-215)
-        layout_yrng_min = st.number_input('Ymin',None,None,-215)
-        layout_zrng_min = st.number_input('Zmin',None,None,-215)
+        layout_xrng_min = st.number_input('Xmin', None, None, -215)
+        layout_yrng_min = st.number_input('Ymin', None, None, -215)
+        layout_zrng_min = st.number_input('Zmin', None, None, -215)
     with layout_col2:
-        layout_xrng_max = st.number_input('Xmax',None,None,215)
-        layout_yrng_max = st.number_input('Ymax',None,None,215)
-        layout_zrng_max = st.number_input('Zmax',None,None,215)
-    layout_dict['xrng'] = [layout_xrng_min,layout_xrng_max]
-    layout_dict['yrng'] = [layout_yrng_min,layout_yrng_max]
-    layout_dict['zrng'] = [layout_zrng_min,layout_zrng_max]
+        layout_xrng_max = st.number_input('Xmax', None, None, 215)
+        layout_yrng_max = st.number_input('Ymax', None, None, 215)
+        layout_zrng_max = st.number_input('Zmax', None, None, 215)
+    layout_dict['xrng'] = [layout_xrng_min, layout_xrng_max]
+    layout_dict['yrng'] = [layout_yrng_min, layout_yrng_max]
+    layout_dict['zrng'] = [layout_zrng_min, layout_zrng_max]
 
-
-    input_dict = {'Sun': Sun_dict, 'HCS': HCS_dict,'HPS': HPS_dict, 'Planet': Planet_dict, 'Spacecraft': Spacecraft_dict, 'Layout': layout_dict}
+    input_dict = {'Sun': Sun_dict, 'HCS': HCS_dict, 'slice': slice_dict, 'HPS': HPS_dict,
+                  'Planet': Planet_dict, 'Spacecraft': Spacecraft_dict, 'Layout': layout_dict}
     import plotly.graph_objects as go
 
     if st.button('Plot'):
-        print('===============================Submitted at'+str(datetime.now())+'====================================')
+        print('===============================Submitted at' + str(
+            datetime.now()) + '====================================')
         print(str(input_dict))
         plot = go.Figure()
         plot_ensemble(input_dict, plot)
-        st.plotly_chart(plot,use_container_width=True)
+        st.plotly_chart(plot, use_container_width=True)
         import plotly.offline
-        plotly.offline.plot(plot,filename='ensemble/Ensemble.html',auto_open=False,auto_play=False)
+
+        plotly.offline.plot(plot, filename='ensemble/Ensemble.html', auto_open=False, auto_play=False)
         time_id = datetime.now().strftime('%Y%m%dT%H%M')
 
-        input_file = open('ensemble/Ensemble_input.txt','w')
+        input_file = open('ensemble/Ensemble_input.txt', 'w')
         input_file.write(str(input_dict))
         input_file.close()
         import zipfile
-        zip_file = zipfile.ZipFile('ensemble.zip','w')
-        zip_file.write('ensemble/Ensemble.html',compress_type=zipfile.ZIP_DEFLATED)
+
+        zip_file = zipfile.ZipFile('ensemble.zip', 'w')
+        zip_file.write('ensemble/Ensemble.html', compress_type=zipfile.ZIP_DEFLATED)
         zip_file.write('ensemble/Ensemble_input.txt', compress_type=zipfile.ZIP_DEFLATED)
         zip_file.close()
 
-        with open('ensemble.zip','rb') as plot_file:
-            btn = st.download_button(label='Download Zip',data=plot_file,file_name='Ensemble_'+time_id+'.zip')
-        print('=========================END at'+str(datetime.now())+'============================')
-
-
-
-
-
-
+        with open('ensemble.zip', 'rb') as plot_file:
+            btn = st.download_button(label='Download Zip', data=plot_file, file_name='Ensemble_' + time_id + '.zip')
+        print('=========================END at' + str(datetime.now()) + '============================')

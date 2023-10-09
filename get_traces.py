@@ -41,6 +41,14 @@ def get_HCS_traces(HCS_dict):
 
     return HCS_trace_list
 
+def get_slice_traces(**slice_dict):
+    slice_trace_list = []
+    if slice_dict['plot_sc']:
+        slice_trace_list.append(plot_zslice(region='corona',**slice_dict))
+    elif slice_dict['plot_ih']:
+        slice_trace_list.append(plot_zslice(region='helio',**slice_dict))
+    return slice_trace_list
+
 def get_HPS_traces(HPS_dict):
     HPS_trace_list = []
     crid = HPS_dict['crid']

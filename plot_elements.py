@@ -4,8 +4,8 @@ import requests
 import numpy as np
 from datetime import datetime, timedelta
 import pyvista
-
 import sunpy.coordinates.sun as sun
+from scipy.interpolate import griddata as gd
 
 import plotly.graph_objects as go
 import spiceypy as spice
@@ -51,7 +51,7 @@ def plot_sun(Sun_dict):
                           showscale=False)
 
 
-def plot_planet_model(planet_str, dt):
+def plot_planet_model(planet_str, dt, radius=5.):
     et = spice.datetime2et(dt)
     planet_pos, _ = spice.spkpos(planet_str, et, 'IAU_SUN', 'NONE', 'SUN')
     planet_pos = np.array(planet_pos).T / Rs2km
@@ -64,7 +64,7 @@ def plot_planet_model(planet_str, dt):
     colorscale = [[i / 255.0, 'rgb({},{},{})'.format(*rgb)] for i, rgb in enumerate(idx_to_color)]
     lon = np.linspace(0, 2 * np.pi, img.shape[1])
     lat = np.linspace(np.pi / 2, -np.pi / 2, img.shape[0])
-    x0, y0, z0 = get_sphere(1, lon, lat)
+    x0, y0, z0 = get_sphere(radius, lon, lat)
     print('Plotting ' + planet_str)
     trace = go.Surface(x=x0 + planet_pos[0], y=y0 + planet_pos[1], z=z0 + planet_pos[2],
                        surfacecolor=np.array(eight_bit_img), cmin=0, cmax=255, colorscale=colorscale, showscale=False)
@@ -160,6 +160,51 @@ def plot_HCS(crid, region, surface_dict):
     return trace
 
 
+def plot_zslice(crid, region, param='vr', z_const=0.,**kwargs):
+    data = ps_read_hdf_3d(crid, region, param+'002', periodicDim=3)
+    r = np.array(data['scales1'])  # 201 in Rs, distance from sun
+    t = np.array(data['scales2'])  # 150 in rad, latitude
+    p = np.array(data['scales3'])  # 256 in rad, Carrington longitude
+    param_data = np.array(data['datas'])  # (129, 111, 140) (p,t,r)
+    param_data = param_data * unit_lst[param]
+
+    tv, pv, rv = np.meshgrid(t, p, r, indexing='xy')
+
+    xv = rv * np.cos(pv) * np.sin(tv)
+    yv = rv * np.sin(pv) * np.sin(tv)
+    zv = rv * np.cos(tv)
+
+    mesh = pyvista.StructuredGrid(xv, yv, zv)
+
+    mesh.point_data['values'] = zv.ravel(order='F')
+    slice = mesh.contour(isosurfaces=1,rng=[z_const,z_const])
+
+    vertices = slice.points
+    triangles = slice.faces.reshape(-1, 4)
+
+    red_ind = np.where(np.abs(zv - z_const) < 3)
+
+    gd_points = np.vstack(
+        (xv[red_ind].reshape(-1), yv[red_ind].reshape(-1), zv[red_ind].reshape(-1))).T
+    param_points = gd(gd_points, param_data[red_ind].reshape(-1), vertices, method='linear')
+
+
+    if 'islog' in kwargs:
+        param_points = np.log10(param_points)
+
+    intensity = np.array(param_points).reshape(-1, 1)
+
+    if not 'clim' in kwargs:
+        clim = [np.nanmin(intensity), np.nanmax(intensity)]
+
+    trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2] * 0 - 5,
+                      cmin=clim[0], cmax=clim[1],
+                      i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
+                      intensity=intensity,
+                      **kwargs)
+
+    return trace
+
 def plot_object_orbit(obj_name, dt_epoch, type='line',**kwargs):
     et_epoch = spice.datetime2et(dt_epoch)
     pos, _ = spice.spkpos(obj_name, et_epoch, 'IAU_SUN', 'NONE', 'SUN')
@@ -178,7 +223,7 @@ def plot_object_orbit(obj_name, dt_epoch, type='line',**kwargs):
     return trace
 
 
-def plot_Spacecraft_model(SC_str, dt, scale=10):
+def plot_Spacecraft_model(SC_str, dt, scale=50):
     et = spice.datetime2et(dt)
     SC_pos, _ = spice.spkpos(SC_str, et, 'IAU_SUN', 'NONE', 'SUN')
     SC_pos = np.array(SC_pos).T / Rs2km
