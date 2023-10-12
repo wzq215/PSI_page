@@ -30,23 +30,36 @@ unit_lst = {'l': 696300,  # km
             'j': 2.267e4}
 
 
-def plot_sun(Sun_dict):
-    crid = Sun_dict['crid']
-    if Sun_dict['surface_data'] == 'br':
+# TODO: change parameter transport & make docstrings
+def plot_sun(crid=2254, surface_data='br', scale=1, **kwargs):
+    """ This function plot the Sun in plotly.
+
+    :param crid: Carrington Number
+    :type crid: int
+    :param surface_data: 'br' or 'AIA_193'
+    :type surface_data: str
+    :param scale: Radius
+    :type scale: float
+    :param kwargs: hand to go.Surface()
+    :type kwargs: Any
+    :return: sun trace
+    :rtype: plotly.Trace
+    """
+    if surface_data == 'br':
         data_sc = ps_read_hdf_3d(crid, 'corona', 'br002', periodicDim=3)
         t_br = np.array(data_sc['scales2'])  # 150 in rad, latitude
         p_br = np.array(data_sc['scales3'])  # 256 in rad, Carrington longitude
         br = np.array(data_sc['datas'])  # 1CU = 2.205G = 2.205e-4T = 2.205e5nT
         br = br * 2.205e5  # nT
         sundata = np.squeeze(br[:, :, 0]).T
-        x0, y0, z0 = get_sphere(Sun_dict['scale'], p_br, t_br, for_PSI=True)
+        x0, y0, z0 = get_sphere(scale, p_br, t_br, for_PSI=True)
 
         return go.Surface(x=x0, y=y0, z=z0, surfacecolor=sundata, colorscale='rdbu', opacity=1, showscale=False,
                           cmax=3e5,
                           cmin=-3e5)
-    elif Sun_dict['surface_data'] == 'AIA_193':
+    elif surface_data == 'AIA_193':
         lon, lat, sundata, map_cmap = load_AIA_data(crid)
-        x0, y0, z0 = get_sphere(Sun_dict['scale'], lon, lat)
+        x0, y0, z0 = get_sphere(scale, lon, lat)
         return go.Surface(x=x0, y=y0, z=z0, surfacecolor=np.squeeze(sundata), colorscale='turbid_r', opacity=1,
                           showscale=False)
 
@@ -97,7 +110,7 @@ def plot_HPS(crid, isos_value=3e5, opacity=0.8, color='azure'):
     return trace
 
 
-def plot_HCS(crid, region, surface_dict):
+def plot_HCS(crid, region, **surface_dict):
     data = ps_read_hdf_3d(crid, region, 'br002', periodicDim=3)
     r = np.array(data['scales1'])  # 201 in Rs, distance from sun
     t = np.array(data['scales2'])  # 150 in rad, latitude
@@ -160,8 +173,8 @@ def plot_HCS(crid, region, surface_dict):
     return trace
 
 
-def plot_zslice(crid, region, param='vr', z_const=0.,**kwargs):
-    data = ps_read_hdf_3d(crid, region, param+'002', periodicDim=3)
+def plot_zslice(crid, region, param='vr', z_const=0., interp=False, r_power=1, clim=None, **kwargs):
+    data = ps_read_hdf_3d(crid, region, param + '002', periodicDim=3)
     r = np.array(data['scales1'])  # 201 in Rs, distance from sun
     t = np.array(data['scales2'])  # 150 in rad, latitude
     p = np.array(data['scales3'])  # 256 in rad, Carrington longitude
@@ -177,27 +190,36 @@ def plot_zslice(crid, region, param='vr', z_const=0.,**kwargs):
     mesh = pyvista.StructuredGrid(xv, yv, zv)
 
     mesh.point_data['values'] = zv.ravel(order='F')
-    slice = mesh.contour(isosurfaces=1,rng=[z_const,z_const])
+    slice = mesh.contour(isosurfaces=1, rng=[z_const, z_const])
 
     vertices = slice.points
     triangles = slice.faces.reshape(-1, 4)
+    if interp:
+        red_ind = np.where(np.abs(zv - z_const) < 3)
+        gd_points = np.vstack(
+            (xv[red_ind].reshape(-1), yv[red_ind].reshape(-1), zv[red_ind].reshape(-1))).T
+        param_points = gd(gd_points, param_data[red_ind].reshape(-1), vertices, method='linear')
+    else:
+        param_points = vertices[:, 0] * 0.
+        for i in range(len(vertices)):
+            point = np.array(vertices[i])
+            r_point, p_point, t_point = xyz2rtp_in_Carrington(point, for_psi=True)
 
-    red_ind = np.where(np.abs(zv - z_const) < 3)
+            r_ind = np.argmin(abs(r_point - r))
+            p_ind = np.argmin(abs(p_point - p))
+            t_ind = np.argmin(abs(t_point - t))
 
-    gd_points = np.vstack(
-        (xv[red_ind].reshape(-1), yv[red_ind].reshape(-1), zv[red_ind].reshape(-1))).T
-    param_points = gd(gd_points, param_data[red_ind].reshape(-1), vertices, method='linear')
-
+            param_points[i] = param_data[p_ind, t_ind, r_ind] * (r[r_ind] ** r_power)
 
     if 'islog' in kwargs:
         param_points = np.log10(param_points)
 
     intensity = np.array(param_points).reshape(-1, 1)
 
-    if not 'clim' in kwargs:
+    if not 'clim':
         clim = [np.nanmin(intensity), np.nanmax(intensity)]
 
-    trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2] * 0 - 5,
+    trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
                       cmin=clim[0], cmax=clim[1],
                       i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
                       intensity=intensity,
@@ -205,7 +227,81 @@ def plot_zslice(crid, region, param='vr', z_const=0.,**kwargs):
 
     return trace
 
-def plot_object_orbit(obj_name, dt_epoch, type='line',**kwargs):
+
+def plot_slice_sun_object(crid, region, param='vr',
+                          object_name='earth', object_dt=None, z_offset=1.,
+                          interp=False, r_power=1, clim=None, **kwargs):
+    et = spice.datetime2et(object_dt)
+    object_pos, _ = spice.spkpos(object_name, et, 'IAU_SUN', 'NONE', 'SUN')
+    object_pos = np.array(object_pos).T / Rs2km
+    object_pos[2] = object_pos[2]-z_offset
+
+    normal = np.cross(np.cross(object_pos, [0, 0, 1]), object_pos)
+    return plot_slice(crid, region, param=param,
+                      normal=normal, origin=[0, 0, 0],
+                      interp=interp, r_power=r_power, clim=clim, **kwargs)
+
+
+def plot_slice(crid, region, param='vr', normal=[0, 0, 1], origin=[0, 0, 0],
+               interp=False, r_power=1, clim=None,
+               **kwargs):
+    data = ps_read_hdf_3d(crid, region, param + '002', periodicDim=3)
+    r = np.array(data['scales1'])  # 201 in Rs, distance from sun
+    t = np.array(data['scales2'])  # 150 in rad, latitude
+    p = np.array(data['scales3'])  # 256 in rad, Carrington longitude
+    param_data = np.array(data['datas'])  # (129, 111, 140) (p,t,r)
+    param_data = param_data * unit_lst[param]
+
+    tv, pv, rv = np.meshgrid(t, p, r, indexing='xy')
+
+    xv = rv * np.cos(pv) * np.sin(tv)
+    yv = rv * np.sin(pv) * np.sin(tv)
+    zv = rv * np.cos(tv)
+
+    dot_normal = xv * (normal[0] + origin[0]) + yv * (normal[1] + origin[1]) + zv * (normal[2] + origin[2])
+
+    mesh = pyvista.StructuredGrid(xv, yv, zv)
+
+    mesh.point_data['values'] = dot_normal.ravel(order='F')
+    slice = mesh.contour(isosurfaces=1, rng=[0, 0])
+
+    vertices = slice.points
+    triangles = slice.faces.reshape(-1, 4)
+    if interp:
+        red_ind = np.where(np.abs(dot_normal - 0) < 3)
+        gd_points = np.vstack(
+            (xv[red_ind].reshape(-1), yv[red_ind].reshape(-1), zv[red_ind].reshape(-1))).T
+        param_points = gd(gd_points, param_data[red_ind].reshape(-1), vertices, method='linear')
+    else:
+        param_points = vertices[:, 0] * 0.
+        for i in range(len(vertices)):
+            point = np.array(vertices[i])
+            r_point, p_point, t_point = xyz2rtp_in_Carrington(point, for_psi=True)
+
+            r_ind = np.argmin(abs(r_point - r))
+            p_ind = np.argmin(abs(p_point - p))
+            t_ind = np.argmin(abs(t_point - t))
+
+            param_points[i] = param_data[p_ind, t_ind, r_ind] * (r[r_ind] ** r_power)
+
+    if 'islog' in kwargs:
+        param_points = np.log10(param_points)
+
+    intensity = np.array(param_points).reshape(-1, 1)
+
+    if not 'clim':
+        clim = [np.nanmin(intensity), np.nanmax(intensity)]
+
+    trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+                      cmin=clim[0], cmax=clim[1],
+                      i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
+                      intensity=intensity,
+                      **kwargs)
+
+    return trace
+
+
+def plot_object_orbit(obj_name, dt_epoch, type='line', **kwargs):
     et_epoch = spice.datetime2et(dt_epoch)
     pos, _ = spice.spkpos(obj_name, et_epoch, 'IAU_SUN', 'NONE', 'SUN')
     pos = np.array(pos.T / Rs2km)
@@ -408,5 +504,4 @@ def plot_layout(plot, layout_dict):
                        xaxis_title_font_size=25,
                        yaxis_title_font_size=25,
                        zaxis_title_font_size=25,
-
                        )

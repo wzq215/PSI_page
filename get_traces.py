@@ -1,3 +1,11 @@
+"""
+This script contain functions that get traces from plot_elements.py for ensemble.py.
+
+parts:
+the Sun (A sphere. go.Surface()) <- get_sun_trace
+the HCS (SC surf and/or IH surf [go.Mesh3d,(go.Mesh3d)]) <- get_HCS_traces
+the Planets (Spheres with surface images.) <- get_planet_traces
+"""
 import os
 import requests
 
@@ -29,6 +37,10 @@ unit_lst = {'l': 696300,  # km
 
 from plot_elements import *
 
+
+def get_sun_trace(**Sun_dict):
+    return plot_sun(**Sun_dict)
+
 def get_HCS_traces(HCS_dict):
     HCS_trace_list = []
     crid = HCS_dict['crid']
@@ -41,13 +53,6 @@ def get_HCS_traces(HCS_dict):
 
     return HCS_trace_list
 
-def get_slice_traces(**slice_dict):
-    slice_trace_list = []
-    if slice_dict['plot_sc']:
-        slice_trace_list.append(plot_zslice(region='corona',**slice_dict))
-    elif slice_dict['plot_ih']:
-        slice_trace_list.append(plot_zslice(region='helio',**slice_dict))
-    return slice_trace_list
 
 def get_HPS_traces(HPS_dict):
     HPS_trace_list = []
@@ -57,6 +62,29 @@ def get_HPS_traces(HPS_dict):
     color = HPS_dict['color']
     HPS_trace_list.append(plot_HPS(crid,isos_value=isos_value,opacity=opacity,color=color))
     return HPS_trace_list
+
+def get_slice_traces(**slice_dict):
+    slice_trace_list = []
+    if slice_dict['plot_sc']:
+        slice_trace_list.append(plot_zslice(region='corona',**slice_dict))
+    elif slice_dict['plot_ih']:
+        slice_trace_list.append(plot_zslice(region='helio',**slice_dict))
+    return slice_trace_list
+
+def get_planet_traces(planet_list=[], planet_orbit_epoch=[], planet_trace_epoch=[], planet_model_dt=None):
+    Planet_trace_list = []
+    for Planet_name in planet_list:
+        if planet_orbit_epoch != []:
+            orbit_trace = plot_object_orbit(Planet_name, planet_orbit_epoch, type='line')
+            Planet_trace_list.append(orbit_trace)
+        if planet_trace_epoch != []:
+            magtrace_trace_list = plot_obj_magtrace(Planet_name, planet_trace_epoch)
+            for magtrace_trace in magtrace_trace_list:
+                Planet_trace_list.append(magtrace_trace)
+        if planet_model_dt != None:
+            Planet_model_trace = plot_planet_model(Planet_name, planet_model_dt)
+            Planet_trace_list.append(Planet_model_trace)
+    return Planet_trace_list
 
 def get_SC_traces(SC_dict):
     SC_trace_list = []
@@ -77,26 +105,8 @@ def get_SC_traces(SC_dict):
             SC_trace_list.append(trace)
     return SC_trace_list
 
-def get_sun_trace(Sun_dict):
-    return plot_sun(Sun_dict)
 
 
-def get_planet_traces(Planet_dict):
-    Planet_list = Planet_dict['Planet_list']
-    Planet_orbit_epoch = Planet_dict['Planet_epoch']
-    Planet_trace_epoch = Planet_dict['Planet_trace_epoch']
-    Planet_model_dt = Planet_dict['Planet_model_dt']
-    Planet_trace_list = []
-    for Planet_name in Planet_list:
-        if Planet_orbit_epoch != []:
-            orbit_trace = plot_object_orbit(Planet_name, Planet_orbit_epoch, type='line')
-            Planet_trace_list.append(orbit_trace)
-        if Planet_trace_epoch != []:
-            magtrace_trace_list = plot_obj_magtrace(Planet_name, Planet_trace_epoch)
-            for magtrace_trace in magtrace_trace_list:
-                Planet_trace_list.append(magtrace_trace)
-        if Planet_model_dt != None:
-            Planet_model_trace = plot_planet_model(Planet_name, Planet_model_dt)
-            Planet_trace_list.append(Planet_model_trace)
-    return Planet_trace_list
+
+
 

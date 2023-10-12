@@ -45,4 +45,8 @@ spice.furnsh('All_reconstructed_ephemeris/spp_recon_20210904_20211104_v001.bsp')
 AU = 1.49e8  # distance from sun to earth
 
 spice.furnsh('kernels/solo/solo_ANC_soc-sci-fk_V08.tf')
-spice.furnsh('kernels/solo/solo_ANC_soc-orbit-stp_20200210-20301120_247_V1_00229_V01.bsp')
+spice.furnsh('kernels/solo/solo_ANC_soc-orbit-stp_20200210-20301120_280_V1_00288_V01.bsp')
+spice.furnsh('kernels/solo/solo_ANC_soc-default-att-stp_20200210-20301120_280_V1_00288_V01.bc')
+spice.furnsh('kernels/solo/solo_ANC_soc-sc-fk_V09.tf')
+spice.furnsh('kernels/solo/solo_ANC_soc-pred-att_20200210_20231022_S280_V4_00291_V01.bc')
+spice.furnsh('kernels/solo/solo_ANC_soc-sclk_20230402_V01.tsc')

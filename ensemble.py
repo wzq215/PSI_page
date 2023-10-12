@@ -49,11 +49,11 @@ def plot_ensemble(input_dict, plot):
                 plot.add_trace(trace)
     if len(input_dict['Sun']) != 0:
         Sun_dict = input_dict['Sun']
-        trace_sun = get_sun_trace(Sun_dict)
+        trace_sun = get_sun_trace(**Sun_dict)
         plot.add_trace(trace_sun)
     if len(input_dict['Planet']) != 0:
         Planet_dict = input_dict['Planet']
-        trace_planet_list = get_planet_traces(Planet_dict)
+        trace_planet_list = get_planet_traces(**Planet_dict)
         for trace in trace_planet_list:
             plot.add_trace(trace)
     plot_layout(plot, input_dict['Layout'])

@@ -8,7 +8,7 @@ from plot_elements import *
 from utils import create_epoch
 
 # %%
-wispr_epoch = np.load('./inner_epoch.npy',allow_pickle=True)
+wispr_epoch = np.load('../inner_epoch.npy', allow_pickle=True)
 sub_wispr_epoch = wispr_epoch[::10]
 
 # %%
