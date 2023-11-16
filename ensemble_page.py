@@ -10,17 +10,17 @@ from ensemble import plot_ensemble
 from utils import create_epoch
 
 
-def ask_for_epoch(key, ini_beg, ini_end):
+def ask_for_epoch(key_, ini_beg_, ini_end_):
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        beg_date = st.date_input('Begin Date', ini_beg, key=key + 'beg_d')
-        end_date = st.date_input('End Date', ini_end, key=key + 'end_d')
+        beg_date = st.date_input('Begin Date', ini_beg_, key=key_ + 'beg_d')
+        end_date = st.date_input('End Date', ini_end_, key=key_ + 'end_d')
     with col2:
-        beg_time = st.time_input('Begin Time', time(0), step=timedelta(minutes=30), key=key + 'beg_t')
-        end_time = st.time_input('End Time', time(0), step=timedelta(minutes=30), key=key + 'end_t')
+        beg_time = st.time_input('Begin Time', time(0), step=timedelta(minutes=30), key=key_ + 'beg_t')
+        end_time = st.time_input('End Time', time(0), step=timedelta(minutes=30), key=key_ + 'end_t')
     time_step = st.sidebar.selectbox('Time Step',
                                      ('1 Day', '12 Hours', '6 Hours', '3 Hours', '1 Hours', '30 Minutes', '15 Minutes'),
-                                     key=key + 'step')
+                                     key=key_ + 'step')
     time_step_timedelta = convert_time_step(time_step)
     beg_datetime = datetime.combine(beg_date, beg_time)
     end_datetime = datetime.combine(end_date, end_time)
@@ -28,64 +28,64 @@ def ask_for_epoch(key, ini_beg, ini_end):
     return epoch
 
 
-def ask_for_datetime(key, ini_beg):
+def ask_for_datetime(key_, ini_beg_):
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        input_date = st.date_input('Date', ini_beg, key=key + 'd')
+        input_date = st.date_input('Date', ini_beg_, key=key_ + 'd')
 
     with col2:
-        input_time = st.time_input('Time', time(0), step=timedelta(minutes=30), key=key + 't')
+        input_time = st.time_input('Time', time(0), step=timedelta(minutes=30), key=key_ + 't')
 
     input_datetime = datetime.combine(input_date, input_time)
     return input_datetime
 
 
-def ask_for_sc_settings(key, ini_beg_dt, ini_end_dt):
-    SC_dict = {'SC_str': key}
+def ask_for_sc_settings(key_, ini_beg_dt_, ini_end_dt_):
+    SC_dict = {'SC_str': key_}
 
-    if st.sidebar.checkbox('Plot Orbit', key=key + 'orbit'):
-        SC_dict['orbit_epoch'] = ask_for_epoch(key + 'orbit', ini_beg_dt, ini_end_dt)
+    if st.sidebar.checkbox('Plot Orbit', key=key_ + 'orbit'):
+        SC_dict['orbit_epoch'] = ask_for_epoch(key_ + 'orbit', ini_beg_dt_, ini_end_dt_)
     else:
         SC_dict['orbit_epoch'] = []
 
-    if st.sidebar.checkbox('Plot Markers', key=key + 'marker'):
-        SC_dict['orbit_marker_epoch'] = ask_for_epoch(key + 'marker', ini_beg_dt, ini_end_dt)
+    if st.sidebar.checkbox('Plot Markers', key=key_ + 'marker'):
+        SC_dict['orbit_marker_epoch'] = ask_for_epoch(key_ + 'marker', ini_beg_dt_, ini_end_dt_)
     else:
         SC_dict['orbit_marker_epoch'] = []
 
-    if st.sidebar.checkbox('3D Model', key=key + '3d'):
-        SC_dict['model_position_dt'] = ask_for_datetime(key + '3d', ini_beg_dt)
+    if st.sidebar.checkbox('3D Model', key=key_ + '3d'):
+        SC_dict['model_position_dt'] = ask_for_datetime(key_ + '3d', ini_beg_dt_)
     else:
         SC_dict['model_position_dt'] = None
 
-    if st.sidebar.checkbox('Trace Back', key=key + 'trace'):
-        SC_dict['trace_epoch'] = ask_for_epoch(key + 'trace', ini_beg_dt, ini_end_dt)
+    if st.sidebar.checkbox('Trace Back', key=key_ + 'trace'):
+        SC_dict['trace_epoch'] = ask_for_epoch(key_ + 'trace', ini_beg_dt_, ini_end_dt_)
     else:
         SC_dict['trace_epoch'] = []
     return SC_dict
 
 
-def convert_time_step(str):
-    if str == '1 Day':
+def convert_time_step(str_):
+    if str_ == '1 Day':
         return timedelta(days=1)
-    elif str == '12 Hours':
+    elif str_ == '12 Hours':
         return timedelta(hours=1)
-    elif str == '6 Hours':
+    elif str_ == '6 Hours':
         return timedelta(hours=6)
-    elif str == '3 Hours':
+    elif str_ == '3 Hours':
         return timedelta(hours=3)
-    elif str == '1 Hour':
+    elif str_ == '1 Hour':
         return timedelta(hours=1)
-    elif str == '30 Minutes':
+    elif str_ == '30 Minutes':
         return timedelta(minutes=30)
-    elif str == '15 Minutes':
+    elif str_ == '15 Minutes':
         return timedelta(minutes=15)
 
 
 if __name__ == '__main__':
     st.markdown('PKU Heliosphere Group')
     st.title('PSI Data 3D Visualization')
-    st.markdown('Revised @ 23/08/21')
+    st.markdown('Revised @ 23/11/16 \n CAUTION!!! LONGITUDINAL & LATITUDINAL SLICES NOT WORKING !!!')
 
     st.sidebar.header('Elements to plot: ')
 
@@ -98,9 +98,9 @@ if __name__ == '__main__':
                                          ('SC', 'IH', 'HPS'), 'SC')
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        slice_options = st.sidebar.multiselect('Slices', ('Latitudinal', 'Longitudinal', 'Radial'), 'Latitudinal')
+        slice_options = st.number_input('Number of Slices', 0, 3, 0)
     with col2:
-        slice_region = st.sidebar.multiselect('Region', ('SC', 'IH'), 'SC')
+        slice_region = st.multiselect('Region', ('SC', 'IH'), None,)
 
     PLANETS_options = st.sidebar.multiselect('Planets',
                                              ('EARTH', 'VENUS', 'MERCURY'))
@@ -189,9 +189,29 @@ if __name__ == '__main__':
         st.sidebar.divider()
         slice_dict['plot_sc'] = ('SC' in slice_region)
         slice_dict['plot_ih'] = ('IH' in slice_region)
+        slice_dict['number'] = slice_options
         st.sidebar.header('Slice Settings')
-        if 'latitudinal' in slice_options:
-            slice_dict['z_const'] = st.sidebar.number_input('Z (Rs)', None, None, value=0., key='z_const')
+
+        for i in range(slice_options):
+            slice_str = 'slice' + str(i + 1)
+            slice_dict[slice_str] = dict()
+            st.sidebar.subheader(slice_str)
+            slice_dict[slice_str]['slice_type'] = st.sidebar.selectbox('Type',
+                                                                 ('Latitudinal', 'Longitudinal', 'Object Plane'),key=slice_str+'_type')
+            if slice_dict[slice_str]['slice_type'] == 'Latitudinal':
+                slice_dict[slice_str]['z_const'] = st.sidebar.number_input('Z(Rs) = ', None, None, value=0.0, step=1.,key=slice_str+'z_const')
+            elif slice_dict[slice_str]['slice_type'] == 'Longitudinal':
+                slice_dict[slice_str]['lon_const'] = st.sidebar.number_input('Longitude(deg) = ', 0., 360., value=0.,
+                                                                             step=1.,key=slice_str+'lon_const')
+            elif slice_dict[slice_str]['slice_type'] == 'Object Plane':
+                slice_object_col1, slice_object_col2 = st.sidebar.columns(2)
+                with slice_object_col1:
+                    slice_dict[slice_str]['object_name'] = st.sidebar.selectbox('Object', (
+                    'Earth', 'SPP', 'SO', 'Venus', 'Mercury'),key=slice_str+'object_name')
+                with slice_object_col2:
+                    slice_dict[slice_str]['z_offset'] = st.sidebar.number_input('Z offset (Rs)', None, None, value=0.,
+                                                                                step=1.,key=slice_str+'z_offset')
+                slice_dict[slice_str]['object_dt'] = ask_for_datetime(slice_str + '_object', Ini_beg_dt)
 
         slice_param = st.sidebar.radio('Slice Param',
                                        ('Solar Wind Speed', 'Solar Wind Proton Density'))
@@ -207,12 +227,13 @@ if __name__ == '__main__':
 
         slice_dict['colorscale'] = slice_cmap
         slice_col1, slice_col2 = st.sidebar.columns(2)
-        slice_islog = False
+
         with slice_col1:
             slice_showscale = st.checkbox('Show Colorbar')
             slice_islog = st.checkbox('Log10')
         with slice_col2:
             slice_rpower = st.number_input('*r^n', 0, 4, 0, step=1)
+            slice_isinterp = st.checkbox('Interp')
 
         slice_default_clim[slice_param] = slice_default_clim[slice_param] * 100 ** slice_rpower
         if slice_islog:
@@ -227,6 +248,7 @@ if __name__ == '__main__':
         slice_dict['showscale'] = slice_showscale
         slice_dict['r_power'] = slice_rpower
         slice_dict['islog'] = slice_islog
+        slice_dict['interp'] = slice_isinterp
         slice_dict['crid'] = Ini_crid
         slice_dict['opacity'] = st.sidebar.number_input('Opacity', 0.0, 1.0, value=0.9, step=0.1, key='opacity_slc')
 
@@ -275,17 +297,25 @@ if __name__ == '__main__':
     st.sidebar.header('Layout Setting')
     layout_dict['theme'] = 'plotly'
     layout_dict['theme'] = st.sidebar.selectbox('Theme', (
-    'plotly', 'plotly_white', 'plotly_dark', 'presentation', 'ggplot2', 'seaborn', 'simple_white', 'none'))
+        'plotly', 'plotly_white', 'plotly_dark', 'presentation', 'ggplot2', 'seaborn', 'simple_white', 'none'))
     layout_col1, layout_col2 = st.sidebar.columns(2)
 
+    limit = 35
+    try:
+        if bool(slice_region) & ('IH' in slice_region):
+            limit = 250
+        if HCS_options & 'IH' in HCS_options:
+            limit= 250
+    except:
+        pass
     with layout_col1:
-        layout_xrng_min = st.number_input('Xmin', None, None, -215)
-        layout_yrng_min = st.number_input('Ymin', None, None, -215)
-        layout_zrng_min = st.number_input('Zmin', None, None, -215)
+        layout_xrng_min = st.number_input('Xmin', None, None, -limit)
+        layout_yrng_min = st.number_input('Ymin', None, None, -limit)
+        layout_zrng_min = st.number_input('Zmin', None, None, -limit)
     with layout_col2:
-        layout_xrng_max = st.number_input('Xmax', None, None, 215)
-        layout_yrng_max = st.number_input('Ymax', None, None, 215)
-        layout_zrng_max = st.number_input('Zmax', None, None, 215)
+        layout_xrng_max = st.number_input('Xmax', None, None, limit)
+        layout_yrng_max = st.number_input('Ymax', None, None, limit)
+        layout_zrng_max = st.number_input('Zmax', None, None, limit)
     layout_dict['xrng'] = [layout_xrng_min, layout_xrng_max]
     layout_dict['yrng'] = [layout_yrng_min, layout_yrng_max]
     layout_dict['zrng'] = [layout_zrng_min, layout_zrng_max]

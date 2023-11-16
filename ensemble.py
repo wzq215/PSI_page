@@ -23,7 +23,8 @@ Platform
 # from utils import  *
 from get_traces import *
 
-#@st.cache_data(ttl=3600)
+
+# @st.cache_data(ttl=3600)
 def plot_ensemble(input_dict, plot):
     if len(input_dict['HCS']) != 0:
         HCS_dict = input_dict['HCS']
@@ -32,7 +33,7 @@ def plot_ensemble(input_dict, plot):
             plot.add_trace(trace_hcs_list[i])
     if len(input_dict['slice']) != 0:
         slice_dict = input_dict['slice']
-        slice_trace_list = get_slice_traces(**slice_dict)
+        slice_trace_list = get_slice_traces(slice_dict)
         for trace in slice_trace_list:
             plot.add_trace(trace)
     if len(input_dict['HPS']) != 0:
@@ -57,11 +58,6 @@ def plot_ensemble(input_dict, plot):
         for trace in trace_planet_list:
             plot.add_trace(trace)
     plot_layout(plot, input_dict['Layout'])
-
-
-
-
-
 
 # if __name__ == '__main__':
 #     # HCS
