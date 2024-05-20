@@ -131,8 +131,8 @@ def ps_load_hdf(crid, region, param,psi_datapath='/Users/ephe/PSI_Data/'):
     for i in range(len(l)):
         print(i,l[i])
     # s=int(input('choose one file: (e.g. 0)'))
-    print('Downloading [2]')
-    s=2
+    print('Downloading [1]')
+    s=1
 
     url += l[s] + region + '/'
     path += '/' + region + '/'

@@ -8,7 +8,7 @@ from plot_elements import *
 from utils import create_epoch
 
 # %%
-wispr_epoch = np.load('../inner_epoch.npy', allow_pickle=True)
+wispr_epoch = np.load('./inner_epoch.npy', allow_pickle=True)
 sub_wispr_epoch = wispr_epoch[::10]
 
 # %%
@@ -31,8 +31,8 @@ plot = go.Figure(data=[plot_Spacecraft_model('SPP', dt_epoch[0], scale=5)]
                                             np.linspace(track['v0'], track['v0'], 20), ) for track in tracks], [])
                       + sum([plot_flux_tube(track['carrlon0'], track['carrlat0'], np.linspace(track['r0'], 1., 20),
                                             np.linspace(track['v0'], track['v0'], 20), ) for track in tracks], [])
-                      + [plot_object_orbit('SPP', dt_epoch, type='line', color='white',width=6),
-                         plot_HCS(crid, 'corona', surface_dict),],
+                      + [plot_object_orbit('SPP', dt_epoch, type='line', color='white', width=6),
+                         plot_HCS(crid, 'corona', **surface_dict), ],
                  frames=[go.Frame(data=[plot_Spacecraft_model('SPP', dt_tmp, scale=5)]
                                        + plot_FOV('SPP', 'SPP_WISPR_INNER', dt_tmp,
                                                   fov_dist_Rs=25, plot_type='wire+surf', color='lime'))
@@ -42,8 +42,10 @@ plot = go.Figure(data=[plot_Spacecraft_model('SPP', dt_epoch[0], scale=5)]
                                              aspectratio=dict(x=1, y=1, z=1)),
                                   template='plotly_dark',
                                   updatemenus=[dict(type='buttons',
-                                                    buttons=[dict(label='Play', method='animate', args=[None])])])).set_subplots(1,2)
+                                                    buttons=[dict(label='Play', method='animate',
+                                                                  args=[None])])])).set_subplots(1, 2)
 from PIL import Image
+
 # img = Image.open('/Users/ephe/Desktop/IMG_8756.JPG')
 # plot.add_trace(go.Image(z=img),1,2)
 plotly.offline.plot(plot)

@@ -173,7 +173,7 @@ def plot_HCS(crid, region, **surface_dict):
     return trace
 
 
-def plot_zslice(crid, region, param='vr', z_const=0., interp=False, r_power=0, clim=None, showscale=None,**kwargs):
+def plot_zslice(crid, region, param='vr', z_const=0., interp=False, r_power=0, clim=None, showscale=None, **kwargs):
     data = ps_read_hdf_3d(crid, region, param + '002', periodicDim=3)
     r = np.array(data['scales1'])  # 201 in Rs, distance from sun
     t = np.array(data['scales2'])  # 150 in rad, latitude
@@ -222,12 +222,12 @@ def plot_zslice(crid, region, param='vr', z_const=0., interp=False, r_power=0, c
     trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
                       cmin=clim[0], cmax=clim[1],
                       i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
-                      intensity=intensity,showscale=showscale)
+                      intensity=intensity, showscale=showscale)
 
     return trace
 
 
-def plot_lonslice(crid, region, param='vr', lon_const=0., interp=False, r_power=0, clim=None,showscale=None, **kwargs):
+def plot_lonslice(crid, region, param='vr', lon_const=0., interp=False, r_power=0, clim=None, showscale=None, **kwargs):
     data = ps_read_hdf_3d(crid, region, param + '002', periodicDim=3)
     r = np.array(data['scales1'])  # 201 in Rs, distance from sun
     t = np.array(data['scales2'])  # 150 in rad, latitude
@@ -276,14 +276,14 @@ def plot_lonslice(crid, region, param='vr', lon_const=0., interp=False, r_power=
     trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
                       cmin=clim[0], cmax=clim[1],
                       i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
-                      intensity=intensity,showscale=showscale)
+                      intensity=intensity, showscale=showscale)
 
     return trace
 
 
 def plot_slice_sun_object(crid, region, param='vr',
                           object_name='earth', object_dt=None, z_offset=1.,
-                          interp=False, r_power=0, clim=None, showscale=None,**kwargs):
+                          interp=False, r_power=0, clim=None, showscale=None, **kwargs):
     et = spice.datetime2et(object_dt)
     object_pos, _ = spice.spkpos(object_name, et, 'IAU_SUN', 'NONE', 'SUN')
     object_pos = np.array(object_pos).T / Rs2km
@@ -292,7 +292,7 @@ def plot_slice_sun_object(crid, region, param='vr',
     normal = np.cross(np.cross(object_pos, [0, 0, 1]), object_pos)
     return plot_slice(crid, region, param=param,
                       normal=normal, origin=[0, 0, 0],
-                      interp=interp, r_power=r_power, clim=clim,showscale=showscale)
+                      interp=interp, r_power=r_power, clim=clim, showscale=showscale)
 
 
 def plot_slice(crid, region, param='vr', normal=[0, 0, 1], origin=[0, 0, 0],
@@ -348,7 +348,7 @@ def plot_slice(crid, region, param='vr', normal=[0, 0, 1], origin=[0, 0, 0],
     trace = go.Mesh3d(x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
                       cmin=clim[0], cmax=clim[1],
                       i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
-                      intensity=intensity,)
+                      intensity=intensity, )
 
     return trace
 
@@ -371,7 +371,7 @@ def plot_object_orbit(obj_name, dt_epoch, type='line', **kwargs):
     return trace
 
 
-def plot_Spacecraft_model(SC_str, dt, scale=50, color='gold'):
+def plot_Spacecraft_model(SC_str, dt, scale=50, color='gold',**kwargs):
     et = spice.datetime2et(dt)
     SC_pos, _ = spice.spkpos(SC_str, et, 'IAU_SUN', 'NONE', 'SUN')
     SC_pos = np.array(SC_pos).T / Rs2km
@@ -408,7 +408,7 @@ def plot_Spacecraft_model(SC_str, dt, scale=50, color='gold'):
                       opacity=1,
                       color=color,
                       i=triangles[:, 1], j=triangles[:, 2], k=triangles[:, 3],
-                      showscale=False,
+                      showscale=False, **kwargs
                       )
     return trace
 
@@ -469,7 +469,8 @@ def plot_FOV(SC_str, inst_str, dt, fov_dist_Rs=20., color='orange', plot_type='w
 
 def plot_flux_tube_from_object(object_name, object_dt, end_radius=5., n_rsteps=20,
                                swv_kmps_at_object=400.,
-                               delta_deg=1., n_edges=8, color='gold'):
+                               delta_deg=1., n_edges=8, deg_vs_r_vect=None,
+                               color='gold'):
     et = spice.datetime2et(object_dt)
     object_pos, _ = spice.spkpos(object_name, et, 'IAU_SUN', 'NONE', 'SUN')
     object_pos = np.array(object_pos).T / Rs2km
@@ -479,18 +480,23 @@ def plot_flux_tube_from_object(object_name, object_dt, end_radius=5., n_rsteps=2
                           np.rad2deg(object_xyz_rlatlon[4]),
                           np.linspace(object_xyz_rlatlon[3], end_radius, n_rsteps),
                           np.linspace(swv_kmps_at_object, swv_kmps_at_object, n_rsteps),
-                          delta_deg=delta_deg, n_edges=n_edges, color=color)
+                          delta_deg=delta_deg, n_edges=n_edges, deg_vs_r_vect=None,
+                          color=color)
 
 
-def plot_flux_tube(start_lon_deg, start_lat_deg, r_vect_Rs, v_vect_kmps, delta_deg=1., n_edges=8, color='gold'):
+def plot_flux_tube(start_lon_deg, start_lat_deg, r_vect_Rs, v_vect_kmps,
+                   delta_deg=1., n_edges=8, deg_vs_r_vect=None,
+                   color='gold'):
     lon_vect_deg, lat_vect_deg = parker_spiral(r_vect_Rs * Rs2AU, start_lat_deg, start_lon_deg, v_vect_kmps)
     x0_vect_Rs, y0_vect_Rs, z0_vect_Rs = rlonlat2cart(r_vect_Rs, np.deg2rad(lon_vect_deg), np.deg2rad(lat_vect_deg))
     tube_edge_lst = []
     tube_circ_lst = []
     circ_edge = []
+    if deg_vs_r_vect is None:
+        deg_vs_r_vect = np.zeros_like(r_vect_Rs) + 1.
     for i in range(n_edges):
-        delta_lon_deg = np.cos(i / n_edges * np.pi * 2) * delta_deg
-        delta_lat_deg = np.sin(i / n_edges * np.pi * 2) * delta_deg
+        delta_lon_deg = np.cos(i / n_edges * np.pi * 2) * delta_deg * deg_vs_r_vect
+        delta_lat_deg = np.sin(i / n_edges * np.pi * 2) * delta_deg * deg_vs_r_vect
         x_vect_Rs, y_vect_Rs, z_vect_Rs = rlonlat2cart(r_vect_Rs, np.deg2rad(lon_vect_deg + delta_lon_deg),
                                                        np.deg2rad(lat_vect_deg + delta_lat_deg))
         tube_edge_lst.append(go.Scatter3d(x=x_vect_Rs, y=y_vect_Rs, z=z_vect_Rs,
