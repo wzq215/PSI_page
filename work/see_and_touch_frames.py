@@ -17,9 +17,9 @@ sub_wispr_epoch = wispr_epoch[::10]
 crid = 2243
 surface_dict = {'color': 'purple', 'opacity': 0.5, 'param': None}
 dt = datetime(2021, 4, 27)
-# dt_epoch = create_epoch([datetime(2021, 4, 27), datetime(2021, 4, 30)], timedelta(hours=4))
+dt_epoch = create_epoch([datetime(2021, 4, 27), datetime(2021, 4, 30)], timedelta(hours=4))
 
-dt_epoch = sub_wispr_epoch
+# dt_epoch = sub_wispr_epoch
 tracks = []
 tracks.append({'r0': 11.3643, 'carrlon0': 63.305, 'carrlat0': -1.1469, 'v0': 296.49,
                't0': datetime(2021, 4, 27, 13, 12, 20)})  # TRACK 2
@@ -37,7 +37,7 @@ track_t0_lst = [datetime(2021, 4, 27, 3, 42, 20),
 
 EXPORT_PATH = 'export/work/ST_frames/'
 os.makedirs(EXPORT_PATH,exist_ok=True)
-
+# %%
 for i in range(len(dt_epoch)):
     dt_tmp = dt_epoch[i]
 
@@ -85,5 +85,11 @@ for i in range(len(dt_epoch)):
         #                                    np.zeros_like(np.arange(1., 30., .5)) + track['v0'],
         #                                    delta_deg=3.,))
     plot.write_image(EXPORT_PATH+'ST_frame_'+str(i)+'.png',scale=3.5)
+# %%
+import imageio
+frames=[]
+for i in range(len(dt_epoch)):
+    frames.append(imageio.imread(EXPORT_PATH+'ST_frame_'+str(i)+'.png'))
+imageio.mimsave(EXPORT_PATH + 'ST_frame.gif', frames,)
     # plotly.offline.plot(plot)
 
